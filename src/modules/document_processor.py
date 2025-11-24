@@ -562,3 +562,93 @@ class OCRExtractor:
             'fields': extracted_fields,
             'raw_text': full_text
         }
+
+if __name__ == "__main__":
+    import argparse
+    import os
+    import json
+    from datetime import datetime
+    
+    # Configure logging
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    
+    parser = argparse.ArgumentParser(description='Batch Document Processor')
+    parser.add_argument('--batch', required=True, help='Input folder path')
+    parser.add_argument('--output', required=True, help='Output folder path')
+    args = parser.parse_args()
+    
+    input_folder = args.batch
+    output_folder = args.output
+    
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    
+    assessor = DocumentQualityAssessor()
+    enhancer = DocumentEnhancer()
+    extractor = OCRExtractor()
+    
+    # Supported extensions
+    valid_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
+    
+    processed_count = 0
+    
+    if not os.path.exists(input_folder):
+        print(f"Input folder {input_folder} does not exist.")
+        exit(1)
+
+    print(f"Starting batch processing from {input_folder} to {output_folder}")
+    
+    for filename in os.listdir(input_folder):
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in valid_extensions:
+            continue
+            
+        filepath = os.path.join(input_folder, filename)
+        print(f"Processing {filename}...")
+        
+        try:
+            # 1. Assess
+            quality_result = assessor.assess_document_quality(filepath)
+            
+            # 2. Enhance
+            enhanced_img, original_img = enhancer.enhance_document(filepath, quality_result.get('score', 0))
+            
+            # Save enhanced image
+            enhanced_filename = f"enhanced_{filename}"
+            enhanced_path = os.path.join(output_folder, enhanced_filename)
+            if enhanced_img is not None:
+                cv2.imwrite(enhanced_path, enhanced_img)
+            
+            # 3. Extract
+            extraction_result = {}
+            structured_data = {}
+            
+            if enhanced_img is not None:
+                extraction_result = extractor.extract_text_with_confidence(enhanced_img)
+                # Extract structured data
+                structured_data = extractor.extract_structured_data(enhanced_img, extraction_result)
+            
+            # Combine results
+            full_result = {
+                'filename': filename,
+                'timestamp': datetime.now().isoformat(),
+                'quality_assessment': quality_result,
+                'extraction': extraction_result,
+                'structured_data': structured_data,
+                'enhanced_image_path': enhanced_filename
+            }
+            
+            # Save result JSON
+            json_filename = f"{os.path.splitext(filename)[0]}_result.json"
+            with open(os.path.join(output_folder, json_filename), 'w') as f:
+                json.dump(full_result, f, indent=2, default=lambda o: float(o) if isinstance(o, (np.float32, np.float64)) else int(o) if isinstance(o, (np.int32, np.int64)) else str(o))
+                
+            processed_count += 1
+            print(f"Completed {filename}")
+            
+        except Exception as e:
+            print(f"Error processing {filename}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+    print(f"Batch processing complete. Processed {processed_count} files.")

@@ -11,7 +11,7 @@ pkgs.mkShell {
   ];
 
   web = {
-    command = "sh -c 'source venv/bin/activate && python3 ui/app.py'";
+    command = "python3 ui/app.py";
     manager = "web";
   };
 }

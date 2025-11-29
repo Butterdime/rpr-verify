@@ -9,4 +9,9 @@ pkgs.mkShell {
     pkgs.python311Packages.pillow
     pkgs.python311Packages.numpy
   ];
+
+  web = {
+    command = "sh -c 'source venv/bin/activate && python3 ui/app.py'";
+    manager = "web";
+  };
 }

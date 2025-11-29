@@ -67,6 +67,22 @@ class GoogleDriveDownloader:
                 "pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib"
             )
     
+    @staticmethod
+    def _normalize_extensions(file_extensions: Optional[List[str]]) -> Optional[List[str]]:
+        """
+        Normalize file extensions to lowercase with leading dot.
+        
+        Args:
+            file_extensions: List of file extensions (e.g., ['jpg', '.PNG', 'pdf'])
+            
+        Returns:
+            Normalized list (e.g., ['.jpg', '.png', '.pdf']) or None if input is None
+        """
+        if not file_extensions:
+            return None
+        return [ext.lower() if ext.startswith('.') else f'.{ext.lower()}' 
+                for ext in file_extensions]
+    
     def authenticate(self) -> bool:
         """
         Authenticate with Google Drive API using OAuth2.
@@ -183,16 +199,15 @@ class GoogleDriveDownloader:
             request = self.service.files().get_media(fileId=file_id)
             
             file_path = os.path.join(output_path, file_name)
-            fh = io.FileIO(file_path, 'wb')
-            downloader = MediaIoBaseDownload(fh, request)
+            with io.FileIO(file_path, 'wb') as fh:
+                downloader = MediaIoBaseDownload(fh, request)
+                
+                done = False
+                while not done:
+                    status, done = downloader.next_chunk()
+                    if status:
+                        self.logger.info(f"Download progress: {int(status.progress() * 100)}%")
             
-            done = False
-            while not done:
-                status, done = downloader.next_chunk()
-                if status:
-                    self.logger.info(f"Download progress: {int(status.progress() * 100)}%")
-            
-            fh.close()
             self.logger.info(f"Downloaded: {file_name}")
             return True
             
@@ -245,9 +260,7 @@ class GoogleDriveDownloader:
             return results
         
         # Normalize file extensions for comparison
-        if file_extensions:
-            file_extensions = [ext.lower() if ext.startswith('.') else f'.{ext.lower()}' 
-                            for ext in file_extensions]
+        normalized_extensions = self._normalize_extensions(file_extensions)
         
         # Download each file
         for file in files:
@@ -268,9 +281,9 @@ class GoogleDriveDownloader:
                 continue
             
             # Filter by extension if specified
-            if file_extensions:
+            if normalized_extensions:
                 file_ext = os.path.splitext(file_name)[1].lower()
-                if file_ext not in file_extensions:
+                if file_ext not in normalized_extensions:
                     self.logger.info(f"Skipping {file_name} (extension {file_ext} not in filter)")
                     results['skipped'] += 1
                     continue
@@ -323,6 +336,9 @@ class GoogleDriveDownloader:
                 results['errors'].append("Authentication failed")
                 return results
         
+        # Normalize file extensions once, outside the recursive function
+        normalized_extensions = self._normalize_extensions(file_extensions)
+        
         def _download_recursive(fid: str, path: str):
             """Inner recursive function"""
             if not os.path.exists(path):
@@ -347,11 +363,9 @@ class GoogleDriveDownloader:
                     continue
                 
                 # Filter by extension
-                if file_extensions:
-                    file_extensions_lower = [ext.lower() if ext.startswith('.') else f'.{ext.lower()}' 
-                                            for ext in file_extensions]
+                if normalized_extensions:
                     file_ext = os.path.splitext(file_name)[1].lower()
-                    if file_ext not in file_extensions_lower:
+                    if file_ext not in normalized_extensions:
                         results['skipped'] += 1
                         continue
                 

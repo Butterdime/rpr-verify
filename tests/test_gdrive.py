@@ -4,6 +4,7 @@ Unit tests for Google Drive Downloader Module
 
 import unittest
 import os
+import shutil
 import tempfile
 from unittest.mock import Mock, patch, MagicMock
 import sys
@@ -27,7 +28,6 @@ class TestGoogleDriveDownloader(unittest.TestCase):
     
     def tearDown(self):
         """Clean up temp files"""
-        import shutil
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
     

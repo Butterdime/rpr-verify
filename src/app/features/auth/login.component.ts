@@ -30,9 +30,12 @@ import { CommonModule } from '@angular/common';
                 </div>
             </div>
 
-            <button class="login-button google-signin-button" (click)="signIn()">
-                <span class="icon">G</span>
-                Sign in with Google Workspace
+            <button class="google-signin-button" (click)="signInWithGoogle()" type="button">
+                <img 
+                    src="assets/google-buttons/web_dark_rd_ctn@4x.png" 
+                    alt="Continue with Google"
+                    class="google-button-image"
+                />
             </button>
             <div class="login-footer">
                 Authorized RPR Communications LLC personnel only.
@@ -63,31 +66,59 @@ import { CommonModule } from '@angular/common';
         display: flex;
         align-items: center;
         justify-content: flex-start;
-        gap: 12px;
-        margin-bottom: 32px;
+        gap: 16px;
+        margin-bottom: 56px;
     }
     .login-logo-mark {
-        width: 32px;
-        height: 32px;
+        width: 52px;
+        height: 52px;
         flex-shrink: 0;
     }
     .login-logo-text {
         display: flex;
-        gap: 6px;
+        gap: 8px;
         align-items: baseline;
     }
     .login-logo-rpr {
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 26px;
+        font-weight: 600;
+        color: var(--text-primary);
         letter-spacing: 0.16em;
-        color: #FFFFFF;
+        line-height: 1;
     }
     .login-logo-verify {
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 26px;
+        font-weight: 600;
+        color: var(--accent-primary);
         letter-spacing: 0.16em;
-        color: #00D9CC;
-        text-shadow: 0 0 18px rgba(0, 217, 204, 0.6);
+        line-height: 1;
+        text-shadow: 0 0 12px rgba(0, 217, 204, 0.4);
+    }
+    .google-signin-button {
+        background: transparent;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        transition: opacity 0.2s ease, transform 0.1s ease;
+        margin: 32px 0;
+    }
+    .google-signin-button:hover {
+        opacity: 0.92;
+        transform: translateY(-1px);
+    }
+    .google-signin-button:active {
+        transform: translateY(0);
+    }
+    .google-button-image {
+        width: 320px;
+        height: auto;
+        display: block;
+        border-radius: 8px;
+    }
+    @media (max-width: 480px) {
+        .google-button-image {
+            width: 280px;
+        }
     }
     .login-input {
         width: 100%;
@@ -99,29 +130,6 @@ import { CommonModule } from '@angular/common';
     }
     .login-input::placeholder {
         color: var(--text-secondary);
-    }
-    .login-button,
-    .google-signin-button {
-        width: 100%;
-        margin-top: 16px;
-        margin-bottom: 24px;
-        padding: 12px 16px;
-        border-radius: 8px;
-        border: none;
-        background: var(--accent-primary);
-        color: #000000;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-    .login-button:hover,
-    .google-signin-button:hover {
-        background: var(--accent-hover);
     }
     .icon {
         font-weight: bold;
@@ -136,9 +144,18 @@ import { CommonModule } from '@angular/common';
 export class LoginComponent {
     // AG-LESSON: Entry point for RPR COMMUNICATIONS LLC Google Workspace login.
 
-    signIn(): void {
+    signInWithGoogle(): void {
         // AG-LESSON: Stub for Google Workspace SSO / OAuth2 integration.
-        console.log('Login clicked - Stub');
+        // TODO: Implement Firebase Google Auth when Firebase is configured
+        // Example implementation:
+        // try {
+        //   const provider = new GoogleAuthProvider();
+        //   const result = await signInWithPopup(this.auth, provider);
+        //   this.router.navigate(['/dashboard']);
+        // } catch (error) {
+        //   console.error('Google sign-in error:', error);
+        // }
+        console.log('Google sign-in clicked - Stub');
         if (typeof window !== 'undefined') {
             window.location.href = '/dashboard';
         }
